@@ -7,8 +7,10 @@
 // peak close since entry. If the stop fires, it stays flat until a
 // sharp 5-bar dip (80+ bps) that is NOT part of a waterfall (30-bar
 // return above -100 bps) — that is the snap-back pocket the dip
-// re-entry buys, with its own 50 bps trailing stop, 60 bps hard stop
-// and 60-bar max hold. A 10%-of-cash probe at scored bar 1320 keeps the
+// re-entry buys, with its own 50 bps trailing stop, 60 bps hard stop,
+// 60-bar max hold, and a waterfall exit if the 30-bar trend collapses
+// 150+ bps under the entry (the snap-back thesis is dead then). A
+// 10%-of-cash probe at scored bar 1320 keeps the
 // entry above the one-trade guardrail if nothing ever fired, and no new
 // entries are opened in the last 6 scored bars.
 //
@@ -40,6 +42,7 @@ const RANGE_MIN_BPS = -100n;
 const TRAIL_DIP_BPS = 50n;
 const STOP_DIP_BPS = 60n;
 const MAX_HOLD_DIP_BARS = 60;
+const DIP_WATERFALL_BPS = -150n;
 const PROBE_SCORED_BAR = 1320;
 const LATE_BLOCK_SCORED_BAR = 1434;
 const MAX_SLIPPAGE_BPS = 500;
@@ -115,6 +118,13 @@ function decide(batch: BatchMsg): Order[] {
       if (mode === 'dip') {
         if (cur * BPS < entryPrice * (BPS - STOP_DIP_BPS)) return [sell(held)];
         if (barsSeen - 1 - entryIdx >= MAX_HOLD_DIP_BARS) return [sell(held)];
+        // Waterfall exit: the dip thesis (snap-back inside a range) is
+        // dead once the 30-bar trend has collapsed 150+ bps under the
+        // entry — get out instead of riding the slide down.
+        if (closes.length > RANGE_LOOKBACK_BARS) {
+          const then30 = closes[closes.length - 1 - RANGE_LOOKBACK_BARS];
+          if (then30 !== null && cur * BPS <= then30 * (BPS + DIP_WATERFALL_BPS)) return [sell(held)];
+        }
       }
     }
     return [];

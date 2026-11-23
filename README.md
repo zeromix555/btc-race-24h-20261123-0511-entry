@@ -21,7 +21,8 @@ and lets the trend do the work:
 - if the stop fires, it stays flat until a sharp **5-bar dip of 80+
   bps** that is **not part of a waterfall** (30-bar return above
   -100 bps) — that snap-back pocket is bought all-in, with its own
-  50 bps trailing stop, 60 bps hard stop and 60-bar max hold;
+  50 bps trailing stop, 60 bps hard stop, 60-bar max hold, and a
+  waterfall exit if the 30-bar trend collapses 150+ bps under the entry;
 - takes one **10%-of-cash probe at scored bar 1320** if nothing ever
   fired, to stay above the one-trade guardrail;
 - blocks new entries in the last 6 scored bars.
